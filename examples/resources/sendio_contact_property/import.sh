@@ -1,0 +1,1 @@
+terraform import sendio_contact_property.plan 7e8f9a0b-1c2d-4e3f-8a4b-5c6d7e8f9a0b

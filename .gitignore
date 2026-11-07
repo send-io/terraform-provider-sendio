@@ -1,0 +1,4 @@
+dist/
+/terraform-provider-sendio
+*.tfstate*
+.terraform/

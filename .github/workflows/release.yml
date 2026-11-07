@@ -1,0 +1,39 @@
+# Releases the provider when a vX.Y.Z tag lands on the public mirror
+# (send-io/terraform-provider-sendio), in the layout the Terraform Registry
+# reads: per-platform zips, SHA256SUMS, its GPG signature and the manifest.
+# Needs two repository secrets: GPG_PRIVATE_KEY (the armored send.io release
+# key, whose public half is added to the registry namespace) and PASSPHRASE.
+# The GitHub release is created as a draft (.goreleaser.yml); publish it by
+# hand after a look, and the registry picks it up.
+
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      - id: gpg
+        uses: crazy-max/ghaction-import-gpg@v6
+        with:
+          gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
+          passphrase: ${{ secrets.PASSPHRASE }}
+      - uses: goreleaser/goreleaser-action@v6
+        with:
+          version: '~> v2'
+          args: release --clean
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GPG_FINGERPRINT: ${{ steps.gpg.outputs.fingerprint }}
