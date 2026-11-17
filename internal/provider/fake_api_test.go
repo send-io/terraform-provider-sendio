@@ -365,9 +365,10 @@ func (f *fakeAPI) route(r *http.Request, b map[string]any) (any, int) {
 		f.templateVersion(t, merged)
 		return map[string]any{"object": "template", "id": t["id"]}, 200
 	case p(0) == "templates" && n == 3 && p(2) == "publish" && m == "POST":
+		// A template is a design: publish needs content, not a subject or From.
 		t := f.templateRef(p(1))
-		if str(t, "subject") == "" {
-			invalid("A template needs a subject before it can be published.")
+		if str(t, "html") == "" && str(t, "text") == "" {
+			invalid("A template needs content (HTML or text) before it can be published.")
 		}
 		t["status"], t["published_at"], t["has_unpublished_versions"] = "published", now(), false
 		return map[string]any{"object": "template", "id": t["id"]}, 200

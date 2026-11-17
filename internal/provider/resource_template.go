@@ -72,8 +72,9 @@ func (r *templateResource) Metadata(_ context.Context, req resource.MetadataRequ
 func (r *templateResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	nonEmpty := []validator.String{stringvalidator.LengthAtLeast(1)}
 	resp.Schema = schema.Schema{
-		MarkdownDescription: "An email template. Every change is saved as a new draft version; with " +
-			"`publish = true` the draft is published so sends use it.",
+		MarkdownDescription: "An email template: a design (content and variables). Every change is saved as a new draft version; with " +
+			"`publish = true` the draft is published so sends, transactional emails and new broadcasts use it. " +
+			"`subject` and `from` are optional defaults for sends that do not give their own.",
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
 				Computed: true, MarkdownDescription: "Template id.",
@@ -82,11 +83,11 @@ func (r *templateResource) Schema(_ context.Context, _ resource.SchemaRequest, r
 			"name":  schema.StringAttribute{Required: true, MarkdownDescription: "Template name.", Validators: nonEmpty},
 			"alias": schema.StringAttribute{Optional: true, MarkdownDescription: "Unique alias usable in place of the id when sending.", Validators: nonEmpty},
 			"subject": schema.StringAttribute{
-				Optional: true, MarkdownDescription: "Subject line (required to publish).", Validators: nonEmpty,
+				Optional: true, MarkdownDescription: "Default subject for sends that do not give one. Optional: a template can be published without it.", Validators: nonEmpty,
 			},
 			"from": schema.StringAttribute{
 				Optional: true, Validators: nonEmpty,
-				MarkdownDescription: "Default sender, for example `Acme <hello@mail.example.com>` (required to publish; its domain must be verified).",
+				MarkdownDescription: "Default sender for sends that do not give one, for example `Acme <hello@mail.example.com>`. Optional: a template can be published without it. Its domain is checked when an email is sent.",
 			},
 			"html":         schema.StringAttribute{Required: true, MarkdownDescription: "HTML body.", Validators: nonEmpty},
 			"text":         schema.StringAttribute{Optional: true, MarkdownDescription: "Plain-text body.", Validators: nonEmpty},
@@ -136,14 +137,6 @@ func (r *templateResource) ValidateConfig(ctx context.Context, req resource.Vali
 	resp.Diagnostics.Append(req.Config.Get(ctx, &m)...)
 	if resp.Diagnostics.HasError() {
 		return
-	}
-	if m.Publish.ValueBool() {
-		if m.Subject.IsNull() {
-			resp.Diagnostics.AddAttributeError(path.Root("subject"), "Subject required to publish", "A template needs a subject before it can be published.")
-		}
-		if m.From.IsNull() {
-			resp.Diagnostics.AddAttributeError(path.Root("from"), "From required to publish", "A template needs a From address before it can be published.")
-		}
 	}
 	if !m.From.IsNull() && !m.From.IsUnknown() {
 		if _, err := parseFrom(m.From.ValueString()); err != nil {

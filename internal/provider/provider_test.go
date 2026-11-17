@@ -367,7 +367,6 @@ resource "sendio_template" "t" {
 func TestUnitTemplateValidation(t *testing.T) {
 	f := newFakeAPI(t)
 	for _, tc := range []struct{ body, want string }{
-		{`publish = true`, "subject before it can be published"},
 		{`variables = [{ key = "FLAG", type = "boolean" }]`, "need template_engine"},
 		{`variables = [{ key = "N", type = "number", fallback_value = "abc" }]`, "not a number"},
 		{`from = "not an address"`, "not a valid From address"},
@@ -378,6 +377,26 @@ func TestUnitTemplateValidation(t *testing.T) {
 			ExpectError: regexp.MustCompile(tc.want),
 		})
 	}
+}
+
+// A template is a design: it publishes with no subject and no From (they
+// are optional defaults), and the plan has nothing left to do afterwards.
+func TestUnitTemplatePublishesWithoutSubjectOrFrom(t *testing.T) {
+	f := newFakeAPI(t)
+	cfg := f.providerConfig() + "resource \"sendio_template\" \"t\" {\n  name = \"Sign-in code\"\n  html = \"<p>{{{CODE}}}</p>\"\n  publish = true\n" +
+		"  variables = [{ key = \"CODE\", type = \"string\" }]\n}"
+	unit(t, f,
+		resource.TestStep{
+			Config: cfg,
+			Check: resource.ComposeAggregateTestCheckFunc(
+				resource.TestCheckResourceAttr("sendio_template.t", "status", "published"),
+				resource.TestCheckNoResourceAttr("sendio_template.t", "subject"),
+				resource.TestCheckNoResourceAttr("sendio_template.t", "from"),
+				resource.TestCheckResourceAttr("sendio_template.t", "has_unpublished_versions", "false"),
+			),
+		},
+		resource.TestStep{Config: cfg, PlanOnly: true},
+	)
 }
 
 func TestUnitMarketing(t *testing.T) {

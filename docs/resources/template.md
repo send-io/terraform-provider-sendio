@@ -3,12 +3,12 @@
 page_title: "sendio_template Resource - sendio"
 subcategory: ""
 description: |-
-  An email template. Every change is saved as a new draft version; with publish = true the draft is published so sends use it.
+  An email template: a design (content and variables). Every change is saved as a new draft version; with publish = true the draft is published so sends, transactional emails and new broadcasts use it. subject and from are optional defaults for sends that do not give their own.
 ---
 
 # sendio_template (Resource)
 
-An email template. Every change is saved as a new draft version; with `publish = true` the draft is published so sends use it.
+An email template: a design (content and variables). Every change is saved as a new draft version; with `publish = true` the draft is published so sends, transactional emails and new broadcasts use it. `subject` and `from` are optional defaults for sends that do not give their own.
 
 ## Example Usage
 
@@ -40,10 +40,10 @@ resource "sendio_template" "welcome" {
 ### Optional
 
 - `alias` (String) Unique alias usable in place of the id when sending.
-- `from` (String) Default sender, for example `Acme <hello@mail.example.com>` (required to publish; its domain must be verified).
+- `from` (String) Default sender for sends that do not give one, for example `Acme <hello@mail.example.com>`. Optional: a template can be published without it. Its domain is checked when an email is sent.
 - `preview_text` (String) Inbox preview text.
 - `publish` (Boolean) Publish the draft after every change. When the template gets unpublished edits outside Terraform, the next plan shows it being published again. Setting it back to `false` does not unpublish.
-- `subject` (String) Subject line (required to publish).
+- `subject` (String) Default subject for sends that do not give one. Optional: a template can be published without it.
 - `template_engine` (String) `simple` (default, `{{{VAR}}}` placeholders) or `handlebars`.
 - `text` (String) Plain-text body.
 - `variables` (Attributes List) Variables the template uses (at most 50). (see [below for nested schema](#nestedatt--variables))
