@@ -1,7 +1,7 @@
 # Release build in the layout the Terraform Registry requires:
 # terraform-provider-sendio_<version>_<os>_<arch>.zip per platform, a
 # SHA256SUMS file, its detached GPG signature, and the registry manifest.
-# Not wired to any CI yet and nothing is published from here.
+# Run by .github/workflows/release.yml on a vX.Y.Z tag.
 version: 2
 
 project_name: terraform-provider-sendio
@@ -38,8 +38,7 @@ checksum:
   name_template: "{{ .ProjectName }}_{{ .Version }}_SHA256SUMS"
   algorithm: sha256
 
-# TODO: create the send.io release GPG key, add its public key to the
-# registry namespace, and pass GPG_FINGERPRINT in the release environment.
+# Signs the checksum file with the key imported by the workflow (GPG_FINGERPRINT).
 signs:
   - artifacts: checksum
     args:
@@ -55,7 +54,7 @@ release:
   extra_files:
     - glob: terraform-registry-manifest.json
       name_template: "{{ .ProjectName }}_{{ .Version }}_manifest.json"
-  draft: true
+  draft: false
 
 changelog:
   disable: true
